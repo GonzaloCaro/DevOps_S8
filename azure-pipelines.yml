@@ -96,15 +96,12 @@ stages:
               runOptions: 'inline'
               inline: |
                 set -e
-                echo "🔹 Actualizando dependencias..."
-                sudo apt update -y
-                sudo apt install -y docker.io
-                echo "🔹 Deteniendo contenedor previo..."
+                echo "Deteniendo contenedor previo..."
                 sudo docker stop S8DevOps-app || true
                 sudo docker rm S8DevOps-app || true
-                echo "🔹 Iniciando nuevo contenedor..."
+                echo "Iniciando nuevo contenedor..."
                 sudo docker run -d --name S8DevOps-app -p 80:3000 $(containerRegistry)/$(imageRepository):$(tag)
-                echo "✅ Despliegue completado exitosamente en la VM"
+                echo "Despliegue completado exitosamente en la VM"
             displayName: "Deploy via SSH to VM"
 
 # ==========================
