@@ -1,0 +1,16 @@
+{
+  "name": "S8DevOps-devops-demo",
+  "version": "1.0.1",
+  "description": "Aplicación demo para Azure Container Registry - Experiencia DevOps S8",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["azure", "docker", "devops", "acr", "containers"],
+  "author": "GC-SB-PD - S8 DevOps - Grupo 1 - DUOC UC",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

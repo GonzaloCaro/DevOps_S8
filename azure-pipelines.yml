@@ -1,0 +1,123 @@
+#=============================================
+# Azure DevOps Pipeline - CI/CD Completo
+#=============================================
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+# Imagen base del agente que ejecutará el pipeline
+pool:
+  vmImage: ubuntu-latest
+
+# Variables globales
+variables:
+  dockerRegistryServiceConnection: S8DevOps-connection
+  imageRepository: demo/S8DevOps-app
+  containerRegistry: S8DevOps.azurecr.io
+  dockerfilePath: $(Build.SourcesDirectory)/Dockerfile
+  tag: $(Build.BuildId)
+  sshConnection: 'MyVmSSH' # conexión SSH configurada en DevOps
+  targetFolder: '/var/www/html'
+
+# =======================
+# 1. STAGE: Build & Test
+# =======================
+stages:
+  - stage: Build
+    displayName: "Build and Test Application"
+    jobs:
+      - job: Build
+        displayName: "Install dependencies and run tests"
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: 18.x
+            displayName: "Install Node.js"
+
+          - script: |
+              cd Azure
+              npm ci
+              npm run build --if-present
+              npm test --if-present
+            displayName: "Install dependencies and run tests"
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFiles: '**/test-results.xml'
+              testRunTitle: "Node.js Test Results"
+
+# ==========================
+# 2. STAGE: Build & Push Docker
+# ==========================
+  - stage: Docker
+    displayName: "Build and Push Docker Image"
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: Docker
+        displayName: "Docker Build & Push"
+        steps:
+          - task: Docker@2
+            inputs:
+              command: buildAndPush
+              repository: $(imageRepository)
+              dockerfile: $(dockerfilePath)
+              containerRegistry: $(dockerRegistryServiceConnection)
+              tags: |
+                latest
+                $(tag)
+            displayName: "Build and push Docker image"
+
+          - script: |
+              echo "✅ Docker image successfully pushed:"
+              echo "$(containerRegistry)/$(imageRepository):$(tag)"
+            displayName: "Confirm Docker Push"
+
+# ==========================
+# 3. STAGE: Deploy to VM
+# ==========================
+  - stage: Deploy
+    displayName: "Deploy to Azure VM"
+    dependsOn: Docker
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: DeployJob
+        displayName: "Deploy to production VM"
+        steps:
+          - task: SSH@0
+            inputs:
+              sshEndpoint: $(sshConnection)
+              runOptions: 'inline'
+              inline: |
+                set -e
+                echo "🔹 Actualizando dependencias..."
+                sudo apt update -y
+                sudo apt install -y docker.io
+                echo "🔹 Deteniendo contenedor previo..."
+                sudo docker stop S8DevOps-app || true
+                sudo docker rm S8DevOps-app || true
+                echo "🔹 Iniciando nuevo contenedor..."
+                sudo docker run -d --name S8DevOps-app -p 80:3000 $(containerRegistry)/$(imageRepository):$(tag)
+                echo "✅ Despliegue completado exitosamente en la VM"
+            displayName: "Deploy via SSH to VM"
+
+# ==========================
+# 4. STAGE: Integration Tests
+# ==========================
+  - stage: Tests
+    displayName: "Integration Tests"
+    dependsOn: Deploy
+    condition: succeeded()
+    jobs:
+      - job: IntegrationTests
+        displayName: "Verify deployment health"
+        steps:
+          - script: |
+              echo "🔹 Verificando despliegue..."
+              curl -f http://20.14.85.85 || (echo "❌ Error en verificación" && exit 1)
+              echo "✅ Aplicación accesible y en ejecución"
+            displayName: "Integration test (health check)"
