@@ -1,4 +1,4 @@
-# Week 6 DevOps - Azure Container Registry Demo
+# Semana 8 DevOps - Evaluación Sumativa 3
 
 **Autores**: Sebastián Briceño, Gonzalo Caro, Benjamín Dávila
 **Curso**: DevOps - DUOC UC  
