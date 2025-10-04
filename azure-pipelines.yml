@@ -10,7 +10,7 @@ trigger:
 
 # Imagen base del agente que ejecutará el pipeline
 pool:
-  vmImage: ubuntu-latest
+  name: 'Default'
 
 # Variables globales
 variables:
