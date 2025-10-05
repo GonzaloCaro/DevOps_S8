@@ -1,6 +1,6 @@
 # Semana 8 DevOps - Evaluación Sumativa 3
 
-**Autores**: Sebastián Briceño, Gonzalo Caro, Benjamín Dávila
+**Autores**: Gonzalo Caro, Benjamín Dávila, Sebastián Briceño
 **Curso**: DevOps - DUOC UC  
 **Experiencia**: Evaluación Sumativa 3 – CI/CD con Azure DevOps y Azure VM 
 
